@@ -134,7 +134,7 @@ def extract_data(foldData, pageProps):
 
 @app.route('/', methods=['GET'])
 def index():
-    return jsonify({'credits': 'Made with ❤️ by Chintamani pala',"version": "1.0.0"})
+    return jsonify({'credits': 'Made with ❤️ by Chintamani pala',"version": "1.0.0","website": "https://chintamanipala.in"})
 
 @app.route('/api/search', methods=['GET'])
 def search_movie():
