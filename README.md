@@ -51,8 +51,11 @@ Ensure you have Python 3.7 or higher installed on your system.
 # EndPoints
 ## Search Movies by Name:
   Endpoint: /api/search
+  
   Method: GET
+  
   Parameters:  query (required): The name of the movie to search for.
+  
   Example Request:
   ```bash
   curl "http://127.0.0.1:5000/api/search?query=Inception"
@@ -60,8 +63,11 @@ Ensure you have Python 3.7 or higher installed on your system.
 
 ## Get Movie Data by IMDb ID:
   Endpoint: /api/movie
+  
   Method: GET
+  
   Parameters: id (required): The IMDb ID of the movie.
+  
   Example Request:
   ```bash
     curl "http://127.0.0.1:5000/api/movie?id=tt1375666"
