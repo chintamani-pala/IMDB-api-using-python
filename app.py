@@ -50,28 +50,38 @@ def extract_top_casts(page_props):
 def extract_common_details(page_props, fold_data):
     title_text = fold_data.get('originalTitleText', {}).get('text', 'N/A')
     thumbnail = fold_data.get('primaryImage', {}).get('url', 'N/A')
-    primary_video = fold_data.get("primaryVideos", {}).get("edges", [{}])[0].get("node", {})
-    release_year = primary_video.get("primaryTitle", {}).get("releaseYear", {}).get("year", "N/A")
-    avg_rating = fold_data.get("ratingsSummary", {}).get("aggregateRating", "N/A")
-    rating_vote_count = fold_data.get("ratingsSummary", {}).get("voteCount", "N/A")
-    time_duration = fold_data.get("runtime", {}).get("displayableProperty", {}).get("value", {}).get("plainText", "0h")
-    description = fold_data.get("plot", {}).get("plotText", {}).get("plainText", "No description available")
+    release_year = fold_data.get("releaseDate", {}).get("year", "N/A")
+    avg_rating = fold_data.get("ratingsSummary", {})
+    avg_rating = "N/A" if avg_rating is None else avg_rating.get("aggregateRating", "N/A")
+    rating_vote_count = fold_data.get("ratingsSummary", {})
+    rating_vote_count = "N/A" if rating_vote_count is None else rating_vote_count.get("voteCount", "N/A")
+    time_duration_data = fold_data.get("runtime")
+    time_duration = "N/A" if time_duration_data is None else time_duration_data.get("displayableProperty", {}).get("value", {}).get("plainText", "N/A")
+    # description = fold_data.get("plot", {}).get("plotText", {}).get("plainText", "No description available")
+    plot_data = fold_data.get("plot", {})
+    plot_text_data = plot_data.get("plotText",None) if plot_data else None
+    description = "No description available" if plot_text_data is None else plot_text_data.get("plainText", "No description available")
     release_date = f'{fold_data.get("releaseDate", {}).get("day", "N/A")}/{fold_data.get("releaseDate", {}).get("month", "N/A")}/{fold_data.get("releaseDate", {}).get("year", "N/A")}'
     country_of_origin = page_props.get("mainColumnData", {}).get("countriesOfOrigin", {}).get("countries", [{}])[0].get("text", "N/A")
-    languages = ', '.join([lang.get("text", "N/A") for lang in page_props.get("mainColumnData", {}).get("spokenLanguages", {}).get("spokenLanguages", [])])
+    spoken_languages_data = page_props.get("mainColumnData", {}).get("spokenLanguages")
+    languages_list = spoken_languages_data.get("spokenLanguages") if spoken_languages_data else []
+    languages = ', '.join([lang.get("text", "N/A") for lang in languages_list])
+    
     isSeries = fold_data.get("titleType", {}).get("isSeries", "N/A")
     budget_data = page_props.get("mainColumnData", {}).get("productionBudget", {})
+    
     budget_data = budget_data.get("budget", {}) if budget_data else {}
     production_budget = {
         "production_budget_price": budget_data.get("amount", "N/A"),
         "production_budget_currency": budget_data.get("currency", "N/A")
     }
     
-    worldwise_gross_total_data = page_props.get("mainColumnData", {}).get("worldwideGross", {})
-    worldwise_gross_total_data = worldwise_gross_total_data.get("total", {}) if worldwise_gross_total_data else {}
+    
+    worldwide_gross_total_data = page_props.get("mainColumnData", {}).get("worldwideGross", {})
+    worldwide_gross_total_data = worldwide_gross_total_data.get("total", {}) if worldwide_gross_total_data else {}
     worldwide_gross = {
-        "worldwide_gross_amount": worldwise_gross_total_data.get("amount", "N/A"),
-        "worldwide_gross_currency": worldwise_gross_total_data.get("currency", "N/A")
+        "worldwide_gross_amount": worldwide_gross_total_data.get("amount", "N/A"),
+        "worldwide_gross_currency": worldwide_gross_total_data.get("currency", "N/A")
     }
     
     return {
@@ -93,22 +103,72 @@ def extract_common_details(page_props, fold_data):
 
 def extract_movie_details(page_props, fold_data):
     details = extract_common_details(page_props, fold_data)
+    director = (
+        fold_data.get("principalCredits", [{}])[0] if len(fold_data.get("principalCredits", [])) > 0 else "N/A")
+    director = director.get("credits", [{}])[0] if len(director.get("credits", [])) > 0 else "N/A"
+    director = (director.get("name", {}).get("nameText", {}).get("text", "N/A")
+        if len(fold_data.get("principalCredits", [])) > 0 and
+        len(fold_data.get("principalCredits", [{}])[0].get("credits", [])) > 0
+        else "N/A")
+    writer = (
+        ', '.join([
+            credit.get("name", {}).get("nameText", {}).get("text", "N/A")
+            for credit in fold_data.get("principalCredits", [{}])[1].get("credits", [])
+        ])
+        if len(fold_data.get("principalCredits", [])) > 1
+        else "N/A"
+    )
+
+    stars = (
+        ', '.join([
+            credit.get("name", {}).get("nameText", {}).get("text", "N/A")
+            for credit in fold_data.get("principalCredits", [{}])[2].get("credits", [])
+        ])
+        if len(fold_data.get("principalCredits", [])) > 2
+        else "N/A"
+    )
+
+    playbackURL = (
+        fold_data.get("primaryVideos", {}).get("edges", [{}])[0]
+        .get("node", {}).get("playbackURLs", [{}])[0]
+        .get("url", "N/A")
+        if len(fold_data.get("primaryVideos", {}).get("edges", [])) > 0 and
+        len(fold_data.get("primaryVideos", {}).get("edges", [{}])[0]
+        .get("node", {}).get("playbackURLs", [])) > 0
+        else "N/A"
+    )
 
     details.update({
-        'director': fold_data.get("principalCredits", [{}])[0].get("credits", [{}])[0].get("name", {}).get("nameText", {}).get("text", "N/A"),
-        'writer': ', '.join([credit.get("name", {}).get("nameText", {}).get("text", "N/A") for credit in fold_data.get("principalCredits", [])[1].get("credits", [])]),
-        'stars': ', '.join([credit.get("name", {}).get("nameText", {}).get("text", "N/A") for credit in fold_data.get("principalCredits", [])[2].get("credits", [])]),
-        'playbackURL': fold_data.get("primaryVideos", {}).get("edges", [{}])[0].get("node", {}).get("playbackURLs", [{}])[0].get("url", "N/A")
+        'director': director,
+        'writer': writer,
+        'stars': stars,
+        'playbackURL': playbackURL
     })
+    
     return details
-
 def extract_series_details(page_props, fold_data):
     details = extract_common_details(page_props, fold_data)
+
+    director = (fold_data.get("principalCredits", [{}])[0].get("credits", [{}])[0].get("name", {}).get("nameText", {}).get("text", "N/A")
+            if len(fold_data.get("principalCredits", [])) > 0 and len(fold_data.get("principalCredits", [{}])[0].get("credits", [])) > 0 else "N/A")
+
+    creators = (', '.join([credit.get("name", {}).get("nameText", {}).get("text", "N/A") 
+                       for credit in fold_data.get("principalCredits", [])[0].get("credits", [])]) 
+            if len(fold_data.get("principalCredits", [])) > 0 else "N/A")
+
+    stars = (', '.join([credit.get("name", {}).get("nameText", {}).get("text", "N/A") 
+                    for credit in fold_data.get("principalCredits", [])[1].get("credits", [])]) 
+         if len(fold_data.get("principalCredits", [])) > 1 else "N/A")
+
+    playbackURL = (fold_data.get("primaryVideos", {}).get("edges", [{}])[0].get("node", {}).get("playbackURLs", [{}])[0].get("url", "N/A")
+               if len(fold_data.get("primaryVideos", {}).get("edges", [])) > 0 and 
+               len(fold_data.get("primaryVideos", {}).get("edges", [{}])[0].get("node", {}).get("playbackURLs", [])) > 0 else "N/A")
+
     details.update({
-        'director': fold_data.get("principalCredits", [{}])[0].get("credits", [{}])[0].get("name", {}).get("nameText", {}).get("text", "N/A"),
-        'creators': ', '.join([credit.get("name", {}).get("nameText", {}).get("text", "N/A") for credit in fold_data.get("principalCredits", [])[0].get("credits", [])]),
-        'stars': ', '.join([credit.get("name", {}).get("nameText", {}).get("text", "N/A") for credit in fold_data.get("principalCredits", [])[1].get("credits", [])]),
-        'playbackURL': fold_data.get("primaryVideos", {}).get("edges", [{}])[0].get("node", {}).get("playbackURLs", [{}])[0].get("url", "N/A")
+        'director': director,
+        'creators': creators,
+        'stars': stars,
+        'playbackURL': playbackURL
     })
     return details
 
@@ -147,6 +207,30 @@ def search_movie():
         return jsonify(results)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route("/api/search/getFullInfo", methods=['GET'])
+def get_full_info():
+    query = request.args.get('query')
+    if not query:
+        return jsonify({'error': 'Query is required'}), 400
+
+    try:
+        results = search_by_name(query)
+        ids = [result['id'] for result in results]
+        fullInfo = []
+
+        for id in ids:
+            try:
+                full_info = extract_data(id)
+                fullInfo.append(full_info)
+            except Exception as e:
+                print(f"Failed to extract data for ID {id}: {e}")  
+                continue
+
+        return jsonify(fullInfo)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/movie', methods=['GET'])
 def get_movie_data():
