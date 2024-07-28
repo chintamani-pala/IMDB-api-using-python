@@ -188,9 +188,9 @@ def extract_data(imdb_id):
     fold_data = page_props.get('aboveTheFoldData', {})
     
     if fold_data.get("titleType", {}).get("isSeries", False):
-        return extract_series_details(page_props, fold_data)
+        return extract_series_details(page_props, fold_data).update({'id': imdb_id})
     else:
-        return extract_movie_details(page_props, fold_data)
+        return extract_movie_details(page_props, fold_data).update({'id': imdb_id})
 
 @app.route('/', methods=['GET'])
 def index():
