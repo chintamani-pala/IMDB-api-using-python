@@ -101,7 +101,7 @@ def extract_common_details(page_props, fold_data):
         'topCasts': extract_top_casts(page_props)
     }
 
-def extract_movie_details(page_props, fold_data):
+def extract_movie_details(page_props, fold_data, imdb_id):
     details = extract_common_details(page_props, fold_data)
     director = (
         fold_data.get("principalCredits", [{}])[0] if len(fold_data.get("principalCredits", [])) > 0 else "N/A")
@@ -139,6 +139,7 @@ def extract_movie_details(page_props, fold_data):
     )
 
     details.update({
+        'imdb_id': imdb_id,
         'director': director,
         'writer': writer,
         'stars': stars,
@@ -146,7 +147,7 @@ def extract_movie_details(page_props, fold_data):
     })
     
     return details
-def extract_series_details(page_props, fold_data):
+def extract_series_details(page_props, fold_data, imdb_id):
     details = extract_common_details(page_props, fold_data)
 
     director = (fold_data.get("principalCredits", [{}])[0].get("credits", [{}])[0].get("name", {}).get("nameText", {}).get("text", "N/A")
@@ -165,6 +166,7 @@ def extract_series_details(page_props, fold_data):
                len(fold_data.get("primaryVideos", {}).get("edges", [{}])[0].get("node", {}).get("playbackURLs", [])) > 0 else "N/A")
 
     details.update({
+        'imdb_id': imdb_id,
         'director': director,
         'creators': creators,
         'stars': stars,
@@ -188,9 +190,9 @@ def extract_data(imdb_id):
     fold_data = page_props.get('aboveTheFoldData', {})
     
     if fold_data.get("titleType", {}).get("isSeries", False):
-        return extract_series_details(page_props, fold_data).update({'id': imdb_id})
+        return extract_series_details(page_props, fold_data, imdb_id)
     else:
-        return extract_movie_details(page_props, fold_data).update({'id': imdb_id})
+        return extract_movie_details(page_props, fold_data, imdb_id)
 
 @app.route('/', methods=['GET'])
 def index():
