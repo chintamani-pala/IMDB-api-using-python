@@ -72,6 +72,17 @@ Ensure you have Python 3.7 or higher installed on your system.
   ```bash
     curl "http://127.0.0.1:5000/api/movie?id=tt1375666"
   ```
+## Search Movies by Name And Get Full Data:
+  Endpoint: /api/movie
+  
+  Method: GET
+  
+  Parameters: query (required): The name of the movie to search for.
+  
+  Example Request:
+  ```bash
+    curl "http://127.0.0.1:5000/api/search/getFullInfo?query=kalki"
+  ```
 # Error Handling
 ## The API handles various errors gracefully and returns appropriate HTTP status codes and error messages.
   - 400 Bad Request: Missing required query parameters.
